@@ -27,6 +27,7 @@ class Scraper:
         self.db = DB()
         self.bot = bot
         options = webdriver.ChromeOptions()
+        options.add_argument('--no-sandbox')
         options.add_argument('--headless')
         webdriver_path = self.config.get("WEBDRIVER_PATH")
         self.driver = webdriver.Chrome(
