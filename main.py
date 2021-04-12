@@ -5,6 +5,7 @@ import multiprocessing as mp
 from exts.scraper import Scraper
 import asyncio
 from models.models import Event
+import os
 
 config = json.load(open('config.json'))
 
@@ -14,6 +15,10 @@ bot = commands.Bot(command_prefix=prefix)
 BOT_TOKEN = config.get("BOT_TOKEN")
 
 queue = mp.Queue()
+
+
+if os.path.exists('events.db'):
+    os.remove('events.db')
 
 
 def _create_embed(event: Event):

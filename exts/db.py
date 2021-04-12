@@ -1,14 +1,14 @@
 import sqlite3
 from models.models import Event
 import os
+import subprocess
 
 
 class DB:
     def __init__(self):
         self.db_name = 'events.db'
-        if os.path.exists(self.db_name):
-            os.remove(self.db_name)
         self.conn = sqlite3.connect(self.db_name, isolation_level=None)
+        subprocess.call(['chmod', '777', self.db_name])
         self.cur = self.conn.cursor()
         self.table_name = 'events'
         self.cur.execute(
