@@ -1,0 +1,6 @@
+*.zip
+config.json
+tests.py
+*.db
+.vscod*
+__pyca*
