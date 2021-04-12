@@ -21,6 +21,10 @@ async def send_event_notification(event: Event, queue):
     queue.put(event)
 
 
+CURRENCIES = ["USD", "EUR", "GBP", "CAD" "AUD", "NZD", "CHF",
+              "DAX", "CRUDE OIL", "NATURAL GAS", "AGRICULTURAL COMMODITIES"]
+
+
 class Scraper:
     def __init__(self, bot):
         self.config = json.load(open('config.json'))
@@ -34,7 +38,7 @@ class Scraper:
             executable_path=webdriver_path, options=options)
         self.driver.implicitly_wait(10)
         self.loop = asyncio.new_event_loop()
-        self.URL = 'https://www.investing.com/economic-calendar/'
+        self.URL = 'https://ftmo.com/en/calendar/'
         self.itter_time = 300
         # self.jobstore = {
         #     'default': SQLAlchemyJobStore(url='sqlite:///jobs.sqlite')
@@ -44,6 +48,7 @@ class Scraper:
         self.schedular.start()
         self.schedular.print_jobs()
         self.tz_name = 'America/New_York'
+        self.tz = pytz.timezone(self.tz_name)
 
     def start(self, queue):
         self.queue = queue
@@ -61,60 +66,32 @@ class Scraper:
     async def schedule_notification(self, event):
         trigger = DateTrigger(
             run_date=event.event_time - timedelta(hours=1), timezone=self.tz_name)
-        # test_trigger = DateTrigger(run_date=dt.now() + timedelta(seconds=30))
+        trigger = DateTrigger(run_date=dt.now() + timedelta(seconds=30))
         self.schedular.add_job(send_event_notification, trigger=trigger,
                                args=(event, self.queue), replace_existing=True)
 
     async def get_all_events(self):
         self.driver.get(self.URL)
-        table_xpath = '//table[@id="economicCalendarData"]'
         try:
             WebDriverWait(self.driver, 30).until(
                 EC.presence_of_all_elements_located(
-                    (By.XPATH, table_xpath))
+                    (By.CLASS_NAME, 'macroCal'))
             )
         except exceptions.TimeoutException:
             return None
-        table = self.driver.find_element_by_xpath(
-            '//table[@id="economicCalendarData"]')
-        tbody = table.find_element_by_tag_name('tbody')
-        rows = tbody.find_elements_by_tag_name('tr')
-        rows.pop(0)
+        table = self.driver.find_element_by_class_name("macroCal")
+        tbody = table.find_element_by_tag_name("tbody")
+        rows = tbody.find_elements_by_class_name("fundament")
         events = list()
         for row in rows:
             event = Event()
-            row_id = row.get_attribute("id").replace("eventRowId_", '').strip()
-            event.id = row_id
-            date_time = row.get_attribute("data-event-datetime")
-            date = date_time.split(' ')[0]
-            year = int(date.split('/')[0])
-            month = int(date.split('/')[1])
-            day = int(date.split('/')[2])
-            time = date_time.split(' ')[-1].strip()
-            hours = int(time.split(':')[0])
-            minutes = int(time.split(':')[1])
-            event.event_time = dt(year=year, month=month, day=day,
-                                  hour=hours, minute=minutes, tzinfo=pytz.timezone(self.tz_name))
-            event.date = f'{year}/{month}/{day}'
-            event.time = time
-            event.currency = row.find_element_by_class_name(
-                "flagCur").text.strip()
-            event.impact = row.find_element_by_class_name(
-                "sentiment").get_attribute("title").strip()
-            event.title = row.find_element_by_class_name("event").text
-            event.link = row.find_element_by_class_name(
-                "event").find_element_by_tag_name("a").get_attribute("href")
-            actual = row.find_element_by_id(
-                f'eventActual_{row_id}').text.strip()
-            if actual != '':
-                event.actual = actual
-            forecast = row.find_element_by_id(
-                f'eventForecast_{row_id}').text.strip()
-            if forecast != '':
-                event.forecast = forecast
-            prev = row.find_element_by_id(
-                f'eventPrevious_{row_id}').text.strip()
-            if prev != '':
-                event.previous = prev
+            event.title = row.find_elements_by_tag_name("td")[0].text
+            event.currency = row.find_elements_by_tag_name("td")[1].text
+            timestamp = row.get_attribute("data-timestamp")
+            date_time = dt.fromtimestamp(int(timestamp), tz=self.tz)
+            event.date = f'{date_time.year}/{date_time.month}/{date_time.day}'
+            event.time = f'{date_time.hour}:{date_time.minute}'
+            event.event_time = dt.fromtimestamp(int(timestamp), tz=self.tz)
+            event.id = f'{event.title}{event.currency}'.encode('utf-8').hex()
             events.append(event)
         return events

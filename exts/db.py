@@ -12,7 +12,7 @@ class DB:
         self.cur = self.conn.cursor()
         self.table_name = 'events'
         self.cur.execute(
-            f"CREATE TABLE IF NOT EXISTS {self.table_name} (event_id, event_name, date, time, currency, link, impact)")
+            f"CREATE TABLE IF NOT EXISTS {self.table_name} (event_id, event_name, date, time, currency)")
 
     def get_events_by_date(self, date):
         self.cur.execute(f'SELECT * FROM {self.table_name} WHERE date = ?',
@@ -25,6 +25,5 @@ class DB:
         return True if self.cur.fetchone() is not None else False
 
     def add_event(self, event: Event):
-        self.cur.execute(f'INSERT INTO {self.table_name} VALUES (?,?,?,?,?,?,?)',
-                         (event.id, event.title, event.date, event.time, event.currency,
-                          event.link, event.impact))
+        self.cur.execute(f'INSERT INTO {self.table_name} VALUES (?,?,?,?,?)',
+                         (event.id, event.title, event.date, event.time, event.currency))

@@ -18,6 +18,8 @@ class BotCommands(commands.Cog):
         events = self.db.get_events_by_date(date_today)
         embed = Embed()
         embed.title = 'Today\'s Events'
+        if len(events) == 0:
+            embed.description = 'No Restricted Events Today!'
         for event in events:
             embed.add_field(name='Title', value=event[1])
             embed.add_field(name='Currency', value=event[4])
