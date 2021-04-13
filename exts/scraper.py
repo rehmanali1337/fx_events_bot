@@ -36,7 +36,7 @@ class Scraper:
         self.schedular = AsyncIOScheduler(
             event_loop=self.loop)
         self.schedular.start()
-        self.schedular.print_jobs()
+        # self.schedular.print_jobs()
         self.tz_name = 'America/New_York'
         self.tz = pytz.timezone(self.tz_name)
         self.start_driver()
@@ -67,7 +67,7 @@ class Scraper:
     async def schedule_notification(self, event):
         trigger = DateTrigger(
             run_date=event.event_time - timedelta(hours=1), timezone=self.tz_name)
-        trigger = DateTrigger(run_date=dt.now() + timedelta(seconds=30))
+        # trigger = DateTrigger(run_date=dt.now() + timedelta(seconds=30))
         self.schedular.add_job(send_event_notification, trigger=trigger,
                                args=(event, self.queue), replace_existing=True)
 
