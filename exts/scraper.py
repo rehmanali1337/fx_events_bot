@@ -15,6 +15,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.date import DateTrigger
 from datetime import timedelta
 # import pendulum
+import os
 
 
 async def send_event_notification(event: Event, queue):
@@ -30,13 +31,6 @@ class Scraper:
         self.config = json.load(open('config.json'))
         self.db = DB()
         self.bot = bot
-        options = webdriver.ChromeOptions()
-        options.add_argument('--no-sandbox')
-        options.add_argument('--headless')
-        webdriver_path = self.config.get("WEBDRIVER_PATH")
-        self.driver = webdriver.Chrome(
-            executable_path=webdriver_path, options=options)
-        self.driver.implicitly_wait(10)
         self.loop = asyncio.new_event_loop()
         self.URL = 'https://ftmo.com/en/calendar/'
         self.itter_time = 300
@@ -49,6 +43,17 @@ class Scraper:
         self.schedular.print_jobs()
         self.tz_name = 'America/New_York'
         self.tz = pytz.timezone(self.tz_name)
+        self.start_driver()
+
+    def start_driver(self):
+        os.system('pkill chrom')
+        self.options = webdriver.ChromeOptions()
+        self.options.add_argument('--no-sandbox')
+        # self.options.add_argument('--headless')
+        self.webdriver_path = self.config.get("WEBDRIVER_PATH")
+        self.driver = webdriver.Chrome(
+            executable_path=self.webdriver_path, options=self.options)
+        self.driver.implicitly_wait(10)
 
     def start(self, queue):
         self.queue = queue
@@ -71,7 +76,13 @@ class Scraper:
                                args=(event, self.queue), replace_existing=True)
 
     async def get_all_events(self):
-        self.driver.get(self.URL)
+        try:
+            self.driver.get(self.URL)
+        except Exception as e:
+            print(e.__dict__)
+            print('Restarting the driver')
+            self.start_driver()
+            return await self.get_all_events()
         try:
             WebDriverWait(self.driver, 30).until(
                 EC.presence_of_all_elements_located(
