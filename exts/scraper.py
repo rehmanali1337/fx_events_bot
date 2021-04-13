@@ -22,10 +22,6 @@ async def send_event_notification(event: Event, queue):
     queue.put(event)
 
 
-CURRENCIES = ["USD", "EUR", "GBP", "CAD" "AUD", "NZD", "CHF",
-              "DAX", "CRUDE OIL", "NATURAL GAS", "AGRICULTURAL COMMODITIES"]
-
-
 class Scraper:
     def __init__(self, bot):
         self.config = json.load(open('config.json'))
@@ -49,7 +45,7 @@ class Scraper:
         os.system('pkill chrom')
         self.options = webdriver.ChromeOptions()
         self.options.add_argument('--no-sandbox')
-        # self.options.add_argument('--headless')
+        self.options.add_argument('--headless')
         self.webdriver_path = self.config.get("WEBDRIVER_PATH")
         self.driver = webdriver.Chrome(
             executable_path=self.webdriver_path, options=self.options)
