@@ -85,7 +85,7 @@ class Scraper:
                     (By.CLASS_NAME, 'macroCal'))
             )
         except exceptions.TimeoutException:
-            return None
+            return []
         table = self.driver.find_element_by_class_name("macroCal")
         tbody = table.find_element_by_tag_name("tbody")
         rows = tbody.find_elements_by_class_name("fundament")
