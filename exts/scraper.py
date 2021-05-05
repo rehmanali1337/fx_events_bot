@@ -92,13 +92,20 @@ class Scraper:
         events = list()
         for row in rows:
             event = Event()
-            event.title = row.find_elements_by_tag_name("td")[0].text
-            event.currency = row.find_elements_by_tag_name("td")[1].text
-            timestamp = row.get_attribute("data-timestamp")
-            date_time = dt.fromtimestamp(int(timestamp), tz=self.tz)
-            event.date = f'{date_time.year}/{date_time.month}/{date_time.day}'
-            event.time = f'{date_time.hour}:{date_time.minute}'
-            event.event_time = dt.fromtimestamp(int(timestamp), tz=self.tz)
-            event.id = f'{event.title}{event.currency}'.encode('utf-8').hex()
-            events.append(event)
+            try:
+                event.title = row.find_elements_by_tag_name("td")[0].text
+                event.currency = row.find_elements_by_tag_name("td")[1].text
+                timestamp = row.get_attribute("data-timestamp")
+                date_time = dt.fromtimestamp(int(timestamp), tz=self.tz)
+                event.date = f'{date_time.year}/{date_time.month}/{date_time.day}'
+                event.time = f'{date_time.hour}:{date_time.minute}'
+                event.event_time = dt.fromtimestamp(int(timestamp), tz=self.tz)
+                event.id = f'{event.title}{event.currency}'.encode(
+                    'utf-8').hex()
+                events.append(event)
+            except exceptions.StaleElementReferenceException:
+                return events
+            except Exception as e:
+                print(e)
+                return events
         return events
