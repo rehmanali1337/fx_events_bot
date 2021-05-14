@@ -16,6 +16,7 @@ from apscheduler.triggers.date import DateTrigger
 from datetime import timedelta
 # import pendulum
 import os
+import traceback
 
 
 async def send_event_notification(event: Event, queue):
@@ -75,7 +76,8 @@ class Scraper:
         try:
             self.driver.get(self.URL)
         except Exception as e:
-            print(e.__dict__)
+            print('Unexpected exception')
+            traceback.print_exc()
             print('Restarting the driver')
             self.start_driver()
             return await self.get_all_events()
@@ -85,6 +87,10 @@ class Scraper:
                     (By.CLASS_NAME, 'macroCal'))
             )
         except exceptions.TimeoutException:
+            return []
+        except Exception as e:
+            print('Unexpected exception')
+            traceback.print_exc()
             return []
         table = self.driver.find_element_by_class_name("macroCal")
         tbody = table.find_element_by_tag_name("tbody")
@@ -106,6 +112,7 @@ class Scraper:
             except exceptions.StaleElementReferenceException:
                 return events
             except Exception as e:
-                print(e)
+                print('Unexpected exception')
+                traceback.print_exc()
                 return events
         return events
