@@ -17,6 +17,7 @@ from datetime import timedelta
 # import pendulum
 import os
 import traceback
+import signal
 
 
 async def send_event_notification(event: Event, queue):
@@ -42,8 +43,23 @@ class Scraper:
         self.tz = pytz.timezone(self.tz_name)
         self.start_driver()
 
+    @staticmethod
+    def kill_chrome():
+        name = 'chrom'
+        try:
+            # iterating through each instance of the proess
+            for line in os.popen("ps ax | grep " + name + " | grep -v grep"):
+                fields = line.split()
+                # extracting Process ID from the output
+                pid = fields[0]
+                # terminating process
+                os.kill(int(pid), signal.SIGKILL)
+            print("Process Successfully terminated")
+        except:
+            pass
+
     def start_driver(self):
-        os.system('pkill chrom')
+        self.kill_chrome()
         self.options = webdriver.ChromeOptions()
         self.options.add_argument('--no-sandbox')
         self.options.add_argument('--headless')
